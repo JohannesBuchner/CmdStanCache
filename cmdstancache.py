@@ -106,6 +106,7 @@ def hash_data(datafile):
 
 	return md5.hexdigest()
 
+
 def get_formatted_code(code):
 	"""Get reasonably readable formatted code from trimmed code.
 
@@ -123,7 +124,7 @@ def get_formatted_code(code):
 	indent = 0
 	for i, line in enumerate(code.split("\n")):
 		indent -= line.count('}')
-		formatted_code_lines.append('%3d: %s%s' % (i+1, '  ' * indent, line))
+		formatted_code_lines.append('%3d: %s%s' % (i + 1, '  ' * indent, line))
 		indent += line.count('{')
 	return '\n'.join(formatted_code_lines)
 
@@ -184,7 +185,7 @@ def run_stan(code, data, verbose=True, **kwargs):
 	data: dict
 		Model data
 	verbose: bool
-		whether to print the code being compiled, summaries of the 
+		whether to print the code being compiled, summaries of the
 		input data and posterior, and convergence diagnostics.
 	**kwargs: dict
 		arguments passed on to `cmdstanpy.CmdStanModel.sample`
@@ -231,6 +232,7 @@ def run_stan(code, data, verbose=True, **kwargs):
 
 	return results
 
+
 def remove_stuck_chains(stan_variables, method_variables):
 	"""
 	Return posteriors chains.
@@ -246,8 +248,7 @@ def remove_stuck_chains(stan_variables, method_variables):
 	-------
 	stan_variables: dict
 		Dictionary of variables with their posterior chains.
-	"""	
-	
+	"""
 	# identify the likelihood range of each chain
 	# select the chain with the highest likelihood
 	# include all chains which cross into this likelihood range
@@ -258,18 +259,19 @@ def remove_stuck_chains(stan_variables, method_variables):
 	top_chain_min_lp = lp[:, top_chain_index].min()
 	chain_mask = lp.max(axis=0) > top_chain_min_lp
 	if not chain_mask.all():
-		warnings.warn("Ignoring these stuck chains: %s" % (np.where(~chain_mask)[0]+1))
+		warnings.warn("Ignoring these stuck chains: %s" % (np.where(~chain_mask)[0] + 1))
 
 	chain_length, num_chains = lp.shape
 	mask = np.zeros(lp.size, dtype=bool)
 	for i in np.where(chain_mask)[0]:
-		mask[i * chain_length : (i + 1) * chain_length] = True
+		mask[i * chain_length: (i + 1) * chain_length] = True
 
 	filtered_variables = collections.OrderedDict()
 	for k, v in stan_variables.items():
-		filtered_variables[k] = v[mask,...]
+		filtered_variables[k] = v[mask, ...]
 
 	return filtered_variables
+
 
 def plot_corner(stan_variables, max_array_size=20, verbose=True, **kwargs):
 	"""
