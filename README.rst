@@ -9,6 +9,9 @@ Quicker model iterations and enhanced productivity for Stan MCMC by
 Install 
 -------
 
+First install `CmdStanPy <https://cmdstanpy.readthedocs.io/>`_ and
+CmdStan and make sure it works.
+
 ::
 
 	$ pip install cmdstancache
