@@ -43,7 +43,8 @@ jobs:
         run: flake8 cmdstancache.py --show-source
       - name: Install
         run: pip install .[plot]
-      - run: coverage run -m pytest .
+      - name: Test
+        run: coverage run -m pytest .
       - name: Convert coverage output to lcov for coveralls
         # coverage-lcov requires python 3.6, so we cannot upload results
         # from python 2 and 3.5 builds :-(
