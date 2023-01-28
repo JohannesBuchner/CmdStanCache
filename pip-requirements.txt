@@ -1,0 +1,7 @@
+numpy
+corner
+joblib
+cmdstanpy
+flake8
+coveralls
+pytest-html

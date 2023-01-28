@@ -34,7 +34,7 @@ setuptools.setup(
     extras_require=dict(plot=['matplotlib', 'corner']),
     setup_requires=["pytest-runner", ],
     test_suite='tests',
-    tests_require=["pytest>=3", "matplotlib", "getdist"],
+    tests_require=["pytest>=3", "matplotlib", "corner"],
     include_package_data=True,
     license="GPL",
     classifiers=[

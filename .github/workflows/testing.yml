@@ -21,10 +21,10 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pip-requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      - run: pip install flake8 
+      - run: pip install flake8 coverage
       - run: pip uninstall cmdstancache || true 
       - name: Lint
         # stop the build if there are Python syntax errors or undefined names
