@@ -204,10 +204,11 @@ def run_stan(code, data, **kwargs):
 			print('  %-10s: shape %s [%s ... %s]' % (k, shape, np.min(v), np.max(v)))
 		del k, v
 
-	data2 = {k: data[k] for k in sorted(data.keys())}
 	with tempfile.NamedTemporaryFile(suffix='.json') as f:
 		fname = f.name
-		cmdstanpy.write_stan_json(fname, data2)
+		data_sorted = {k: data[k] for k in sorted(data.keys())}
+		cmdstanpy.write_stan_json(fname, data_sorted)
+		del data_sorted
 		data_hash = hash_data(fname)
 
 		datafile = os.path.join(path, data_hash + '.json')
