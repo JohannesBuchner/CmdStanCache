@@ -10,24 +10,26 @@ Install
 -------
 
 ::
+
 	$ pip install cmdstancache
 
 Usage
 -----
+::
 
 	model = """
-data {
-  int N;
-}
-parameters {
-  real<lower=-10.0, upper=10.0> x[N];
-}
-model {
-  for (i in 1:N-1) {
-	 target += -2 * (100 * square(x[i+1] - square(x[i])) + square(1 - x[i]));
-  }
-}
-"""
+	data {
+	  int N;
+	}
+	parameters {
+	  real<lower=-10.0, upper=10.0> x[N];
+	}
+	model {
+	  for (i in 1:N-1) {
+		 target += -2 * (100 * square(x[i+1] - square(x[i])) + square(1 - x[i]));
+	  }
+	}
+	"""
 	data = dict(N=2)
 
 	import cmdstancache
@@ -39,9 +41,11 @@ model {
 		seed=42
 	)
 
-If you run this code twice, the second time the stored result is read.
+**Now comes the trick**:
 
-If you add a comment to the code, and rerun, the same result is returned without having to rerun.
+* If you run this code twice, the second time the stored result is read.
+
+* If you add a comment to the code, and rerun, the same result is returned without having to rerun.
 
 How it works
 -------------
