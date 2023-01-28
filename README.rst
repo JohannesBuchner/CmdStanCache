@@ -6,6 +6,8 @@ Quicker model iterations and enhanced productivity for Stan MCMC by
 * caching model compilation in a smart way
 * caching sampling results in a smart way
 
+No waiting for the resampling the same model with the same data.
+
 Install 
 -------
 
@@ -72,9 +74,9 @@ Here are the details:
 Plotting
 --------
 
-Useful for hierarchical models, you can make quick corner plots of only the scalar model variables::
+Make a quick corner plots of only the scalar model variables::
 
-	plot = plot_corner(stan_variables)
+	cmdstancache.plot_corner(stan_variables)
 
 In case some chains are stuck, and you want to remove their samples for plotting::
 
