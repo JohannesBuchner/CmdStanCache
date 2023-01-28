@@ -52,6 +52,14 @@ Usage
 
 * If you add or modify a code comment, the same result is returned without having to rerun.
 
+.. image:: https://coveralls.io/repos/github/JohannesBuchner/CmdStanCache/badge.svg?branch=main
+	:target: https://coveralls.io/github/JohannesBuchner/CmdStanCache?branch=main
+.. image:: https://github.com/JohannesBuchner/CmdStanCache/actions/workflows/testing.yml/badge.svg
+	:target: https://github.com/JohannesBuchner/CmdStanCache/actions/workflows/testing.yml
+.. image:: https://img.shields.io/pypi/v/cmdstancache.svg
+        :target: https://pypi.python.org/pypi/cmdstancache
+
+
 How it works
 -------------
 
