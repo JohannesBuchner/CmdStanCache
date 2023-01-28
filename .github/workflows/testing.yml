@@ -19,13 +19,24 @@ jobs:
       - name: Set cache date
         run: echo "DATE=$(date +'%Y%m')" >> $GITHUB_ENV
       - uses: actions/cache@v3
+        id: pip-cache
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pip-requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      - run: pip install -r pip-requirements.txt
-      - run: install_cmdstan
+      - uses: actions/cache@v3
+        id: cmdstan-cache
+        with:
+          path: ~/.cmdstan
+          key: ${{ runner.os }}-cmdstan
+          restore-keys: |
+            ${{ runner.os }}-cmdstan
+      - name: Install requirements
+        run: pip install -r pip-requirements.txt
+      - name: Install cmdstan
+        if: steps.cmdstan-cache.outputs.cache-hit != 'true'
+        run: install_cmdstan
       - run: pip uninstall cmdstancache || true 
       - name: Lint
         # stop the build if there are Python syntax errors or undefined names
