@@ -2,6 +2,7 @@ numpy
 corner
 joblib
 cmdstanpy
+pytest
 flake8
 coveralls
 pytest-html
