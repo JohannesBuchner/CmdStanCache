@@ -89,13 +89,13 @@ model {
 	plt.close()
 
 def test_clean_stuck_chains():
-	method_variables = dict(lp__ = np.random.normal(size=4000))
-	method_variables['lp__'][2000:3000] = np.random.normal(-20000, 1, size=1000)
+	method_variables = dict(lp__ = np.random.normal(size=(1000,4)))
+	method_variables['lp__'][:,2] = np.random.normal(-20000, 1, size=1000)
 	stan_variables = dict(myvar1 = np.random.normal(size=4000), myvar2 = np.random.normal(size=4000))
 
-	cleaned_variables = remove_stuck_chains(stan_variables, method_variables, 4)
+	cleaned_variables = remove_stuck_chains(stan_variables, method_variables)
 
-	expected_mask = method_variables['lp__'] > -1000
+	expected_mask = np.transpose(method_variables['lp__']).flatten() > -1000
 	assert cleaned_variables.keys() == set(['myvar1', 'myvar2'])
 	np.testing.assert_equal(cleaned_variables['myvar1'], stan_variables['myvar1'][expected_mask])
 	np.testing.assert_equal(cleaned_variables['myvar2'], stan_variables['myvar2'][expected_mask])
@@ -117,10 +117,12 @@ model {
 }
 """, dict(N=2))
 
-	#cleaned_variables = remove_stuck_chains(stan_variables, method_variables, 4)
-	#for k in 'xyz':
-	#	assert np.testing.assert_equal(cleaned_variables[k], stan_variables[k])
+	print("method_variables:", method_variables)
+	cleaned_variables = remove_stuck_chains(stan_variables, method_variables)
+	print("cleaned_variables:", cleaned_variables)
+	for k in 'xyz':
+		np.testing.assert_equal(cleaned_variables[k], stan_variables[k])
 	
-	plot = plot_corner(stan_variables)
+	plot = plot_corner(cleaned_variables)
 	plot.savefig('test_degeneracy.pdf')
 	plt.close()

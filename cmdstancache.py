@@ -215,7 +215,7 @@ def run_stan(code, data, **kwargs):
 
 	return cached_run_stan(simple_model_code, datafile, **kwargs)
 
-def remove_stuck_chains(stan_variables, method_variables, num_chains):
+def remove_stuck_chains(stan_variables, method_variables):
 	"""
 	Return posteriors chains.
 
@@ -225,8 +225,6 @@ def remove_stuck_chains(stan_variables, method_variables, num_chains):
 		stan_variables returned by fit object
 	method_variables: object
 		method_variables returned by fit object
-	num_chains: int
-		number of chains
 
 	Returns
 	-------
@@ -238,37 +236,26 @@ def remove_stuck_chains(stan_variables, method_variables, num_chains):
 	# select the chain with the highest likelihood
 	# include all chains which cross into this likelihood range
 	# Chains stuck with very poor solutions will be removed
-	print(method_variables)
 	lp = method_variables['lp__']
-	total_chain_length = len(lp)
-	assert total_chain_length % num_chains == 0, ('total chain length %d not divisible by num_chains=%d chains', total_chain_length, num_chains)
-	chain_mask = np.ones(total_chain_length, dtype=bool)
-	chain_length = total_chain_length // num_chains
-	print('chain_length:', chain_length)
-	top_chain_index = np.argmax(lp) // chain_length
-	print('maximum:', top_chain_index, np.argmax(lp), lp.max())
-	mask = slice(top_chain_index * chain_length, (top_chain_index + 1) * chain_length)
-	top_chain_min_lp = np.min(lp[mask])
-	print('minimum:', top_chain_min_lp)
-	del mask
 
-	bad_chains = []
-	for i in range(num_chains):
-		mask = slice(i * chain_length, (i + 1) * chain_length)
-		print(i+1, lp[mask].min(), lp[mask].max(), top_chain_min_lp)
-		if not lp[mask].max() > top_chain_min_lp:
-			bad_chains.append(i + 1)
-			chain_mask[mask] = False
-	if bad_chains:
-		warnings.warn("Ignoring these stuck chains: %s" % (bad_chains))
+	top_chain_index = np.argmax(lp.max(axis=0))
+	top_chain_min_lp = lp[:, top_chain_index].min()
+	chain_mask = lp.max(axis=0) > top_chain_min_lp
+	if not chain_mask.all():
+		warnings.warn("Ignoring these stuck chains: %s" % (np.where(~chain_mask)[0]+1))
+
+	chain_length, num_chains = lp.shape
+	mask = np.zeros(lp.size, dtype=bool)
+	for i in np.where(chain_mask)[0]:
+		mask[i * chain_length : (i + 1) * chain_length] = True
 
 	filtered_variables = collections.OrderedDict()
 	for k, v in stan_variables.items():
-		filtered_variables[k] = v[chain_mask,...]
+		filtered_variables[k] = v[mask,...]
 
 	return filtered_variables
 
-def plot_corner(stan_variables, max_array_size=20, **kwargs):
+def plot_corner(stan_variables, max_array_size=20, verbose=True, **kwargs):
 	"""
 	Make a simple corner plot, based on samples extracted from fit.
 
@@ -284,6 +271,8 @@ def plot_corner(stan_variables, max_array_size=20, **kwargs):
 		stan_variables returned by fit object
 	max_array_size: int
 		largest array variable size to include in the plot. Very large arrays give illegible plots.
+	verbose: bool
+		whether to print posterior mean and std
 	kwargs: dict
 		arguments passed to `corner.corner`.
 
@@ -298,7 +287,8 @@ def plot_corner(stan_variables, max_array_size=20, **kwargs):
 	badlist = [k for k in la.keys() if 'log' in k and k.replace('log', '') in la.keys()]
 
 	for k, v in la.items():
-		print('%20s: %.4f +- %.4f' % (k, v.mean(), v.std()))
+		if verbose:
+			print('%20s: %.4f +- %.4f' % (k, v.mean(), v.std()))
 		if k not in badlist and v.ndim == 1:
 			samples.append(la[k])
 			paramnames.append(k)
@@ -318,7 +308,6 @@ def plot_corner(stan_variables, max_array_size=20, **kwargs):
 	else:
 		final_samples = np.transpose(samples)
 
-	print("parameters considered for corner plot:", paramnames)
 	import corner
 	if 'plot_density' not in kwargs:
 		kwargs['plot_density'] = False

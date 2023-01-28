@@ -31,7 +31,7 @@ setuptools.setup(
     url="https://github.com/JohannesBuchner/CmdStanCache",
     py_modules=['cmdstancache'],
     install_requires=["cmdstanpy", "joblib"],
-    extras_require=dict(plot=['matplotlib', 'getdist']),
+    extras_require=dict(plot=['matplotlib', 'corner']),
     setup_requires=["pytest-runner", ],
     test_suite='tests',
     tests_require=["pytest>=3", "matplotlib", "getdist"],

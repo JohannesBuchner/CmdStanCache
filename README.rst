@@ -69,6 +69,22 @@ Here are the details:
 9. joblib memoizes steps 7 and 8, avoiding resampling when the same data and code hash are seen.
 
 
+Plotting
+--------
+
+Useful for hierarchical models, you can make quick corner plots of only the scalar model variables::
+
+	plot = plot_corner(stan_variables)
+
+In case some chains are stuck, and you want to remove their samples for plotting::
+
+	cleaned_variables = remove_stuck_chains(stan_variables, method_variables)
+	plot = plot_corner(cleaned_variables)
+
+Since this is optional, the dependency of corner is pulled in if installed with::
+
+	$ pip install cmdstancache[plot]
+
 Contributors
 -------------
 
