@@ -14,7 +14,7 @@ import cmdstanpy
 
 __author__ = """Johannes Buchner"""
 __email__ = 'johannes.buchner.acad@gmx.com'
-__version__ = '1.1.1'
+__version__ = '1.2.0'
 
 path = os.path.expanduser("~/.stan_cache")
 mem = joblib.Memory(path, verbose=False)
