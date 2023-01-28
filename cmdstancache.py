@@ -2,11 +2,13 @@
 import os
 import glob
 import joblib
-import numpy
+import numpy as np
 import hashlib
 import re
 import tempfile
 import shutil
+import warnings
+import collections
 
 import cmdstanpy
 
@@ -104,6 +106,27 @@ def hash_data(datafile):
 
 	return md5.hexdigest()
 
+def get_formatted_code(code):
+	"""Get reasonably readable formatted code from trimmed code.
+
+	Parameters
+	----------
+	code: str
+		Stan code
+
+	Returns
+	-------
+	formatted_code: str
+		Stan code
+	"""
+	formatted_code_lines = []
+	indent = 0
+	for i, line in enumerate(code.split("\n")):
+		indent -= line.count('}')
+		formatted_code_lines.append('%3d: %s%s' % (i+1, '  ' * indent, line))
+		indent += line.count('{')
+	return '\n'.join(formatted_code_lines)
+
 
 @mem.cache
 def cached_run_stan(code, datafile, **kwargs):
@@ -125,9 +148,9 @@ def cached_run_stan(code, datafile, **kwargs):
 	method_variables: object
 		method_variables returned by fit object
 	"""
-	print("Slimmed Code")
-	print("------------")
-	print(code)
+	print("Code")
+	print("----")
+	print(get_formatted_code(code))
 	code_hash = hash_model_code(code)
 	codefile = os.path.join(path, code_hash + '.stan')
 	if not os.path.exists(codefile):
@@ -143,6 +166,7 @@ def cached_run_stan(code, datafile, **kwargs):
 	print("Diagnostics")
 	print("-----------")
 	print(fit.diagnose())
+
 	return fit.stan_variables(), fit.method_variables()
 
 
@@ -171,12 +195,14 @@ def run_stan(code, data, **kwargs):
 	print("Data")
 	print("----")
 	for k, v in data.items():
-		if numpy.shape(v) == ():
+		shape = np.shape(v)
+		if shape == ():
 			print('  %-10s: %s' % (k, v))
-		elif numpy.shape(v)[0] == 0:
-			print('  %-10s: shape %s' % (k, numpy.shape(v)))
+		elif shape[0] == 0:
+			print('  %-10s: shape %s' % (k, shape))
 		else:
-			print('  %-10s: shape %s [%s ... %s]' % (k, numpy.shape(v), numpy.min(v), numpy.max(v)))
+			print('  %-10s: shape %s [%s ... %s]' % (k, shape, np.min(v), np.max(v)))
+		del k, v
 
 	data2 = {k: data[k] for k in sorted(data.keys())}
 	f = tempfile.NamedTemporaryFile(suffix='.json')
@@ -188,3 +214,113 @@ def run_stan(code, data, **kwargs):
 	shutil.copy(fname, datafile)
 
 	return cached_run_stan(simple_model_code, datafile, **kwargs)
+
+def remove_stuck_chains(stan_variables, method_variables, num_chains):
+	"""
+	Return posteriors chains.
+
+	Parameters
+	----------
+	stan_variables: object
+		stan_variables returned by fit object
+	method_variables: object
+		method_variables returned by fit object
+	num_chains: int
+		number of chains
+
+	Returns
+	-------
+	stan_variables: dict
+		Dictionary of variables with their posterior chains.
+	"""	
+	
+	# identify the likelihood range of each chain
+	# select the chain with the highest likelihood
+	# include all chains which cross into this likelihood range
+	# Chains stuck with very poor solutions will be removed
+	print(method_variables)
+	lp = method_variables['lp__']
+	total_chain_length = len(lp)
+	assert total_chain_length % num_chains == 0, ('total chain length %d not divisible by num_chains=%d chains', total_chain_length, num_chains)
+	chain_mask = np.ones(total_chain_length, dtype=bool)
+	chain_length = total_chain_length // num_chains
+	print('chain_length:', chain_length)
+	top_chain_index = np.argmax(lp) // chain_length
+	print('maximum:', top_chain_index, np.argmax(lp), lp.max())
+	mask = slice(top_chain_index * chain_length, (top_chain_index + 1) * chain_length)
+	top_chain_min_lp = np.min(lp[mask])
+	print('minimum:', top_chain_min_lp)
+	del mask
+
+	bad_chains = []
+	for i in range(num_chains):
+		mask = slice(i * chain_length, (i + 1) * chain_length)
+		print(i+1, lp[mask].min(), lp[mask].max(), top_chain_min_lp)
+		if not lp[mask].max() > top_chain_min_lp:
+			bad_chains.append(i + 1)
+			chain_mask[mask] = False
+	if bad_chains:
+		warnings.warn("Ignoring these stuck chains: %s" % (bad_chains))
+
+	filtered_variables = collections.OrderedDict()
+	for k, v in stan_variables.items():
+		filtered_variables[k] = v[chain_mask,...]
+
+	return filtered_variables
+
+def plot_corner(stan_variables, max_array_size=20, **kwargs):
+	"""
+	Make a simple corner plot, based on samples extracted from fit.
+
+	Only scalar variables are included.
+	If there is only one model variable, and it is smaller than max_array_size,
+	it is used instead.
+
+	log-variables are preferred (logfoo is plotted instead of foo if both exist).
+
+	Parameters
+	----------
+	stan_variables: object
+		stan_variables returned by fit object
+	max_array_size: int
+		largest array variable size to include in the plot. Very large arrays give illegible plots.
+	kwargs: dict
+		arguments passed to `corner.corner`.
+
+	Returns
+	-------
+	plot: object
+		whatever `corner.corner` returns.
+	"""
+	la = stan_variables
+	samples = []
+	paramnames = []
+	badlist = [k for k in la.keys() if 'log' in k and k.replace('log', '') in la.keys()]
+
+	for k, v in la.items():
+		print('%20s: %.4f +- %.4f' % (k, v.mean(), v.std()))
+		if k not in badlist and v.ndim == 1:
+			samples.append(la[k])
+			paramnames.append(k)
+		del k
+
+	if len(samples) == 0:
+		del samples, paramnames
+		arrays = [k for k in la.keys() if la[k].ndim == 2 and la[k].shape[1] <= max_array_size and k not in badlist]
+		if len(arrays) != 1:
+			warnings.warn("no scalar variables found")
+			return
+
+		key = arrays[0]
+		# flatten across chains and column for each variable
+		final_samples = la[key]
+		paramnames = ['%s[%d]' % (key, i + 1) for i in range(la[key].shape[1])]
+	else:
+		final_samples = np.transpose(samples)
+
+	print("parameters considered for corner plot:", paramnames)
+	import corner
+	if 'plot_density' not in kwargs:
+		kwargs['plot_density'] = False
+		kwargs['plot_datapoints'] = False
+	return corner.corner(final_samples, labels=paramnames, **kwargs)
