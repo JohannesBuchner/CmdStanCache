@@ -128,8 +128,8 @@ def get_formatted_code(code):
 	return '\n'.join(formatted_code_lines)
 
 
-@mem.cache
-def cached_run_stan(code, datafile, **kwargs):
+@mem.cache(ignore=['verbose'])
+def cached_run_stan(code, datafile, verbose=True, **kwargs):
 	"""Run MCMC with the given code and data file.
 
 	Parameters
@@ -138,6 +138,8 @@ def cached_run_stan(code, datafile, **kwargs):
 		Stan model code
 	datafile: str
 		Path to data file
+	verbose: bool
+		whether to print the code being compiled, posterior summaries and diagnostics.
 	**kwargs: dict
 		arguments passed on to `cmdstanpy.CmdStanModel.sample`
 
@@ -148,9 +150,10 @@ def cached_run_stan(code, datafile, **kwargs):
 	method_variables: object
 		method_variables returned by fit object
 	"""
-	print("Code")
-	print("----")
-	print(get_formatted_code(code))
+	if verbose:
+		print("Code")
+		print("----")
+		print(get_formatted_code(code))
 	code_hash = hash_model_code(code)
 	codefile = os.path.join(path, code_hash + '.stan')
 	if not os.path.exists(codefile):
@@ -160,17 +163,18 @@ def cached_run_stan(code, datafile, **kwargs):
 	assert model.code() == code, (model.code, code)
 
 	fit = model.sample(data=datafile, **kwargs)
-	print("Summary")
-	print("-------")
-	print(fit.summary())
-	print("Diagnostics")
-	print("-----------")
-	print(fit.diagnose())
+	if verbose:
+		print("Summary")
+		print("-------")
+		print(fit.summary())
+		print("Diagnostics")
+		print("-----------")
+		print(fit.diagnose())
 
 	return fit.stan_variables(), fit.method_variables()
 
 
-def run_stan(code, data, **kwargs):
+def run_stan(code, data, verbose=True, **kwargs):
 	"""Run MCMC with the given code and data.
 
 	Parameters
@@ -179,6 +183,9 @@ def run_stan(code, data, **kwargs):
 		Stan model code
 	data: dict
 		Model data
+	verbose: bool
+		whether to print the code being compiled, summaries of the 
+		input data and posterior, and convergence diagnostics.
 	**kwargs: dict
 		arguments passed on to `cmdstanpy.CmdStanModel.sample`
 
@@ -191,18 +198,19 @@ def run_stan(code, data, **kwargs):
 	"""
 	simple_model_code = trim_model_code(code)
 
-	print()
-	print("Data")
-	print("----")
-	for k, v in data.items():
-		shape = np.shape(v)
-		if shape == ():
-			print('  %-10s: %s' % (k, v))
-		elif shape[0] == 0:
-			print('  %-10s: shape %s' % (k, shape))
-		else:
-			print('  %-10s: shape %s [%s ... %s]' % (k, shape, np.min(v), np.max(v)))
-		del k, v
+	if verbose:
+		print()
+		print("Data")
+		print("----")
+		for k, v in data.items():
+			shape = np.shape(v)
+			if shape == ():
+				print('  %-10s: %s' % (k, v))
+			elif shape[0] == 0:
+				print('  %-10s: shape %s' % (k, shape))
+			else:
+				print('  %-10s: shape %s [%s ... %s]' % (k, shape, np.min(v), np.max(v)))
+			del k, v
 
 	with tempfile.NamedTemporaryFile(suffix='.json') as f:
 		fname = f.name
@@ -214,7 +222,7 @@ def run_stan(code, data, **kwargs):
 		datafile = os.path.join(path, data_hash + '.json')
 		shutil.copy(fname, datafile)
 
-	results = cached_run_stan(simple_model_code, datafile, **kwargs)
+	results = cached_run_stan(simple_model_code, datafile, verbose=verbose, **kwargs)
 
 	try:
 		os.unlink(datafile)
