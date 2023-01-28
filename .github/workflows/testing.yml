@@ -11,7 +11,8 @@ jobs:
         shell: bash -l {0}
     strategy:
       matrix:
-        python-version: ['3.5', '3.9.1', '3']
+        #python-version: ['3.5', '3.9.1', '3']
+        python-version: 3
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
