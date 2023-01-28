@@ -45,7 +45,7 @@ Usage
 
 * If you run this code twice, the second time the stored result is read.
 
-* If you add a comment to the code, and rerun, the same result is returned without having to rerun.
+* If you add or modify a code comment, the same result is returned without having to rerun.
 
 How it works
 -------------
