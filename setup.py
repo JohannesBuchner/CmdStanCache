@@ -28,7 +28,7 @@ setuptools.setup(
     author="Johannes Buchner",
     author_email="johannes.buchner.acad@gmx.com",
     python_requires='>3.0, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
-    url="https://github.com/JohannesBuchner/cmdstancache",
+    url="https://github.com/JohannesBuchner/CmdStanCache",
     py_modules=['cmdstancache'],
     install_requires=["cmdstanpy", "joblib"],
     extras_require=dict(plot=['matplotlib', 'getdist']),
