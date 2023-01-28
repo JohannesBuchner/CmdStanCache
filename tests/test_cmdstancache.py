@@ -2,9 +2,15 @@ import os
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
+import tempfile
+import cmdstancache
 from cmdstancache import clear, run_stan, get_path, plot_corner, remove_stuck_chains
 
 def test_cache():
+	# use a temporary directory for running the test
+	#d = tempfile.TemporaryDirectory()
+	#cmdstancache.path = d.name
+	cmdstancache.path = os.path.dirname(__file__)
 	print("clearing entire cache ...")
 	clear()
 	print("clearing entire cache ... done")
@@ -22,7 +28,7 @@ model {
 }
 """, dict(N=2))
 	data_files = glob.glob(os.path.join(get_path(), "*.json"))
-	assert len(data_files) == 1
+	assert len(data_files) == 0
 	code_files = glob.glob(os.path.join(get_path(), "*.stan"))
 	assert len(code_files) == 1
 	del data_files, code_files
@@ -45,7 +51,7 @@ model {
 	code_files = glob.glob(os.path.join(get_path(), "*.stan"))
 	assert len(code_files) == 1
 	data_files = glob.glob(os.path.join(get_path(), "*.json"))
-	assert len(data_files) == 1
+	assert len(data_files) == 0
 	del data_files, code_files
 
 	run_stan("""
@@ -66,7 +72,7 @@ model {
 	code_files = glob.glob(os.path.join(get_path(), "*.stan"))
 	assert len(code_files) == 1
 	data_files = glob.glob(os.path.join(get_path(), "*.json"))
-	assert len(data_files) == 2
+	assert len(data_files) == 0
 	del data_files, code_files
 
 def test_plot1var():
@@ -117,9 +123,9 @@ model {
 }
 """, dict(N=2))
 
-	print("method_variables:", method_variables)
+	print("method_variables:", {k: np.shape(v) for k, v in method_variables.items()})
 	cleaned_variables = remove_stuck_chains(stan_variables, method_variables)
-	print("cleaned_variables:", cleaned_variables)
+	print("cleaned_variables:", {k: np.shape(v) for k, v in cleaned_variables.items()})
 	for k in 'xyz':
 		np.testing.assert_equal(cleaned_variables[k], stan_variables[k])
 	

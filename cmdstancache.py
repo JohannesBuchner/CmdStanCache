@@ -205,15 +205,22 @@ def run_stan(code, data, **kwargs):
 		del k, v
 
 	data2 = {k: data[k] for k in sorted(data.keys())}
-	f = tempfile.NamedTemporaryFile(suffix='.json')
-	fname = f.name
-	cmdstanpy.write_stan_json(fname, data2)
-	data_hash = hash_data(fname)
+	with tempfile.NamedTemporaryFile(suffix='.json') as f:
+		fname = f.name
+		cmdstanpy.write_stan_json(fname, data2)
+		data_hash = hash_data(fname)
 
-	datafile = os.path.join(path, data_hash + '.json')
-	shutil.copy(fname, datafile)
+		datafile = os.path.join(path, data_hash + '.json')
+		shutil.copy(fname, datafile)
 
-	return cached_run_stan(simple_model_code, datafile, **kwargs)
+	results = cached_run_stan(simple_model_code, datafile, **kwargs)
+
+	try:
+		os.unlink(datafile)
+	except IOError as e:
+		warnings.warn('Cleaning up stan input data file failed: %s' % e)
+
+	return results
 
 def remove_stuck_chains(stan_variables, method_variables):
 	"""
