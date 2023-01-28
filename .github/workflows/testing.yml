@@ -25,6 +25,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       - run: pip install -r pip-requirements.txt
+      - run: install_cmdstan
       - run: pip uninstall cmdstancache || true 
       - name: Lint
         # stop the build if there are Python syntax errors or undefined names
