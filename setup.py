@@ -22,7 +22,7 @@ def ensure_dir(file_path):
 
 setuptools.setup(
     name="cmdstancache",
-    version="1.1.0",
+    version="1.1.1",
     description="Smart cache for Stan models and runs",
     long_description=long_description,
     author="Johannes Buchner",
