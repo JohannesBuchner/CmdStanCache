@@ -24,7 +24,7 @@ setuptools.setup(
     name="cmdstancache",
     version="1.0.0",
     description="Smart cache for Stan models and runs",
-    long_description=DESCRIPTION,
+    long_description=long_description,
     author="Johannes Buchner",
     author_email="johannes.buchner.acad@gmx.com",
     python_requires='>3.0, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
