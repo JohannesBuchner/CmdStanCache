@@ -129,8 +129,8 @@ def get_formatted_code(code):
 	return '\n'.join(formatted_code_lines)
 
 
-@mem.cache(ignore=['verbose'])
-def cached_run_stan(code, datafile, verbose=True, **kwargs):
+@mem.cache(ignore=['verbose', 'show_console'])
+def cached_run_stan(code, datafile, verbose=True, show_console=False, **kwargs):
 	"""Run MCMC with the given code and data file.
 
 	Parameters
@@ -156,14 +156,14 @@ def cached_run_stan(code, datafile, verbose=True, **kwargs):
 		print("----")
 		print(get_formatted_code(code))
 	code_hash = hash_model_code(code)
-	codefile = os.path.join(path, code_hash + '.stan')
+	codefile = os.path.join(path, 'H%s.stan' % code_hash)
 	if not os.path.exists(codefile):
 		with open(codefile, 'w') as f:
 			f.write(code)
 	model = cmdstanpy.CmdStanModel(stan_file=codefile)
 	assert model.code() == code, (model.code, code)
 
-	fit = model.sample(data=datafile, **kwargs)
+	fit = model.sample(data=datafile, show_console=show_console, **kwargs)
 	if verbose:
 		print("Summary")
 		print("-------")
