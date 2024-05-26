@@ -19,7 +19,7 @@ data {
   int N;
 }
 parameters {
-  real<lower=-10.0, upper=10.0> x[N];
+  array[N] real<lower=-10.0, upper=10.0> x;
 }
 model {
   for (i in 1:N-1) {
@@ -39,7 +39,7 @@ data {
   int N;
 }
 parameters {
-  real<lower=-10.0, upper=10.0> x[N];
+  array[N] real<lower=-10.0, upper=10.0> x;
 }
 model {
   for (i in 1:N-1) {
@@ -60,7 +60,7 @@ data {
   int N;
 }
 parameters {
-  real<lower=-10.0, upper=10.0> x[N];
+  array[N] real<lower=-10.0, upper=10.0> x;
 }
 model {
   for (i in 1:N-1) {
@@ -81,7 +81,7 @@ data {
   int N;
 }
 parameters {
-  real<lower=-10.0, upper=10.0> x[N];
+  array[N] real<lower=-10.0, upper=10.0> x;
 }
 model {
   for (i in 1:N-1) {
@@ -111,7 +111,7 @@ def test_plot_cleaned():
 parameters {
   real x;
   real<lower=0> y;
-  real bigarray[100];
+  array[100] real bigarray;
 }
 transformed parameters {
   real z = x * y;
