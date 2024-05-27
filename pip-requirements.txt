@@ -4,6 +4,8 @@ joblib
 cmdstanpy
 pytest
 flake8
-coveralls
 pytest-html
+#coveralls
+coveralls==3.3.1
+coverage<7.0.0
 coverage-lcov[extras]
