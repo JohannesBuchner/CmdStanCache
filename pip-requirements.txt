@@ -6,5 +6,4 @@ pytest
 flake8
 coveralls
 pytest-html
-coverage-lcov
-toml
+coverage-lcov[extras]
